@@ -8,6 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Filter, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 export default function MapView() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -21,6 +32,42 @@ export default function MapView() {
   useEffect(() => {
     fetchIncidents();
     checkUser();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('incidents-changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'incidents' },
+        (payload) => {
+          console.log('New incident:', payload);
+          setIncidents(prev => [payload.new as Incident, ...prev]);
+        }
+      )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'incidents' },
+        (payload) => {
+          console.log('Updated incident:', payload);
+          setIncidents(prev => 
+            prev.map(incident => 
+              incident.id === payload.new.id ? payload.new as Incident : incident
+            )
+          );
+        }
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'incidents' },
+        (payload) => {
+          console.log('Deleted incident:', payload);
+          setIncidents(prev => 
+            prev.filter(incident => incident.id !== payload.old.id)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -162,29 +209,63 @@ export default function MapView() {
           </CardContent>
         </Card>
 
-        {/* Map Placeholder */}
+        {/* Interactive Map */}
         <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Interactive Map
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
-            <div className="bg-muted rounded-lg h-96 flex items-center justify-center relative overflow-hidden">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Interactive Map Coming Soon</h3>
-                <p className="text-muted-foreground">Map integration with incident markers will be available soon</p>
-              </div>
-              
-              {/* Mock map markers */}
-              {filteredIncidents.slice(0, 5).map((incident, index) => (
-                <div
-                  key={incident.id}
-                  className={`absolute w-3 h-3 rounded-full ${getCategoryColor(incident.category)} border-2 border-background cursor-pointer hover:scale-125 transition-transform`}
-                  style={{
-                    left: `${20 + (index * 15)}%`,
-                    top: `${30 + (index * 10)}%`,
-                  }}
-                  title={incident.title}
-                  onClick={() => handleIncidentClick(incident)}
+            <div className="h-96 rounded-lg overflow-hidden border">
+              <MapContainer 
+                center={[40.7128, -74.0060]} 
+                zoom={12} 
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-              ))}
+                {filteredIncidents.filter(incident => incident.latitude && incident.longitude).map((incident) => (
+                  <Marker 
+                    key={incident.id} 
+                    position={[incident.latitude!, incident.longitude!]}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <h3 className="font-semibold text-sm mb-1">{incident.title}</h3>
+                        <p className="text-xs text-gray-600 mb-2">{incident.description}</p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {incident.category}
+                          </Badge>
+                          <Badge 
+                            variant={incident.status === 'resolved' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {incident.status}
+                          </Badge>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          className="text-xs h-7"
+                          onClick={() => handleIncidentClick(incident)}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span>Incidents with location ({filteredIncidents.filter(i => i.latitude && i.longitude).length})</span>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -8,8 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, AlertCircle, CheckCircle, Upload } from "lucide-react";
+import { MapPin, AlertCircle, CheckCircle, Upload, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in react-leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface FormData {
   title: string;
@@ -20,12 +31,27 @@ interface FormData {
   longitude?: number;
 }
 
+// Component for handling map clicks
+function LocationPicker({ position, setPosition }: { 
+  position: [number, number] | null; 
+  setPosition: (pos: [number, number] | null) => void 
+}) {
+  useMapEvents({
+    click: (e) => {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+    },
+  });
+  
+  return position ? <Marker position={position} /> : null;
+}
+
 export default function ReportIncident() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [mapPosition, setMapPosition] = useState<[number, number] | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -51,6 +77,48 @@ export default function ReportIncident() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setMapPosition([lat, lng]);
+          setFormData(prev => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng
+          }));
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          toast({
+            title: "Location Error",
+            description: "Unable to get your current location. Please set it manually on the map.",
+            variant: "destructive"
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Geolocation Not Supported",
+        description: "Your browser doesn't support geolocation. Please set location manually on the map.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMapPositionChange = (position: [number, number] | null) => {
+    setMapPosition(position);
+    if (position) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: position[0],
+        longitude: position[1]
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -245,13 +313,36 @@ export default function ReportIncident() {
                   />
                 </div>
 
-                {/* Map Placeholder */}
-                <div className="bg-muted rounded-lg h-48 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Interactive map coming soon</p>
-                    <p className="text-xs text-muted-foreground">For now, please enter the address above</p>
+                {/* Interactive Map */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label>Click on map to set precise location (Optional)</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={getCurrentLocation}
+                    >
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Use My Location
+                    </Button>
                   </div>
+                  <div className="h-48 rounded-lg overflow-hidden border">
+                    <MapContainer 
+                      center={mapPosition || [40.7128, -74.0060]} 
+                      zoom={13} 
+                      style={{ height: '100%', width: '100%' }}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <LocationPicker position={mapPosition} setPosition={handleMapPositionChange} />
+                    </MapContainer>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Click anywhere on the map to set the incident location. This helps with precise mapping.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
