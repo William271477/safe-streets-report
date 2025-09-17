@@ -10,17 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, AlertCircle, CheckCircle, Upload, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import Map from "@/components/Map";
 
 interface FormData {
   title: string;
@@ -38,7 +28,7 @@ export default function ReportIncident() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [mapPosition, setMapPosition] = useState<[number, number] | null>(null);
+  const [mapPosition, setMapPosition] = useState<{lng: number, lat: number} | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -107,7 +97,7 @@ export default function ReportIncident() {
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          setMapPosition([lat, lng]);
+          setMapPosition({lng, lat});
           setFormData(prev => ({
             ...prev,
             latitude: lat,
@@ -132,13 +122,13 @@ export default function ReportIncident() {
     }
   };
 
-  const handleMapPositionChange = (position: [number, number] | null) => {
+  const handleMapPositionChange = (position: {lng: number, lat: number} | null) => {
     setMapPosition(position);
     if (position) {
       setFormData(prev => ({
         ...prev,
-        latitude: position[0],
-        longitude: position[1]
+        latitude: position.lat,
+        longitude: position.lng
       }));
     }
   };
@@ -395,19 +385,41 @@ export default function ReportIncident() {
                       Use My Location
                     </Button>
                   </div>
-                  <div className="h-48 rounded-lg overflow-hidden border bg-muted">
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Interactive location picker coming soon</p>
-                        <p className="text-xs text-muted-foreground mt-1">Use the button above to get your current location</p>
-                        {mapPosition && (
-                          <p className="text-xs text-foreground mt-2 font-medium">
-                            Location set: {mapPosition[0].toFixed(4)}, {mapPosition[1].toFixed(4)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                  <Map
+                    center={mapPosition ? [mapPosition.lng, mapPosition.lat] : [40.7128, -74.0060]}
+                    zoom={mapPosition ? 15 : 10}
+                    markers={mapPosition ? [{
+                      id: 'current',
+                      lng: mapPosition.lng,
+                      lat: mapPosition.lat,
+                      title: 'Selected Location',
+                      category: 'location'
+                    }] : []}
+                    onMapClick={(lng, lat) => {
+                      setMapPosition({lng, lat});
+                      setFormData(prev => ({
+                        ...prev,
+                        latitude: lat,
+                        longitude: lng
+                      }));
+                    }}
+                    className="w-full h-48"
+                  />
+                  <div className="mt-2 text-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={getCurrentLocation}
+                    >
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Use My Location
+                    </Button>
+                    {mapPosition && (
+                      <p className="text-xs text-foreground mt-2 font-medium">
+                        Location set: {mapPosition.lat.toFixed(4)}, {mapPosition.lng.toFixed(4)}
+                      </p>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Click "Use My Location" to automatically set your current coordinates, or manually enter them below.

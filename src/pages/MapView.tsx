@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Filter, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import Map from "@/components/Map";
 
 export default function MapView() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -198,7 +199,7 @@ export default function MapView() {
           </CardContent>
         </Card>
 
-        {/* Map Placeholder - Interactive map coming soon */}
+        {/* Interactive Map */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -207,32 +208,26 @@ export default function MapView() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="h-96 rounded-lg overflow-hidden border bg-muted">
-              <div className="h-full flex items-center justify-center relative">
-                <div className="text-center">
-                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Interactive Map Coming Soon</h3>
-                  <p className="text-muted-foreground">Map integration with incident markers will be available soon</p>
-                </div>
-                
-                {/* Mock map markers */}
-                {filteredIncidents.slice(0, 5).map((incident, index) => (
-                  <div
-                    key={incident.id}
-                    className={`absolute w-3 h-3 rounded-full ${getCategoryColor(incident.category)} border-2 border-background cursor-pointer hover:scale-125 transition-transform`}
-                    style={{
-                      left: `${20 + (index * 15)}%`,
-                      top: `${30 + (index * 10)}%`,
-                    }}
-                    title={incident.title}
-                    onClick={() => handleIncidentClick(incident)}
-                  />
-                ))}
-              </div>
-            </div>
+            <Map
+              center={[40.7128, -74.0060]}
+              zoom={10}
+              markers={filteredIncidents
+                .filter(incident => incident.latitude && incident.longitude)
+                .map(incident => ({
+                  id: incident.id,
+                  lng: incident.longitude!,
+                  lat: incident.latitude!,
+                  title: incident.title,
+                  category: incident.category
+                }))}
+              onMapClick={(lng, lat) => {
+                console.log('Map clicked at:', lng, lat);
+              }}
+              className="w-full h-96"
+            />
             <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-primary rounded-full"></div>
                 <span>Incidents with location ({filteredIncidents.filter(i => i.latitude && i.longitude).length})</span>
               </div>
             </div>
