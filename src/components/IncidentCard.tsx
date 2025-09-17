@@ -13,7 +13,11 @@ export interface Incident {
   longitude: number;
   status: 'new' | 'investigating' | 'resolved';
   created_at: string;
+  updated_at?: string;
   user_id: string;
+  profiles?: {
+    display_name?: string;
+  };
 }
 
 interface IncidentCardProps {

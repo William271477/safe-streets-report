@@ -5,7 +5,7 @@ import { IncidentCard, Incident } from "@/components/IncidentCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Plus, MapPin, Shield, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -34,7 +34,7 @@ export default function Home() {
         .limit(20);
 
       if (error) throw error;
-      setIncidents(data || []);
+      setIncidents(data as Incident[] || []);
     } catch (error) {
       console.error('Error fetching incidents:', error);
       // For demo purposes, using mock data
