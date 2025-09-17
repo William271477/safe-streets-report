@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
-
-## Project info
-
-**URL**: https://lovable.dev/projects/20f2d476-c0b9-44f1-b34b-1cb4a8a1f876
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/20f2d476-c0b9-44f1-b34b-1cb4a8a1f876) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# SafetyNet - Community Safety Reporting
+
+## Overview
+SafetyNet is a modern web application for reporting and tracking safety incidents in your community. Built for reliability, speed, and ease of use, it empowers neighborhoods to stay informed and proactive about local safety.
+
+**Author:** William Ndhlovu
+
+---
+
+## Features
+- Report safety incidents quickly and easily
+- View incident details and status updates
+- Interactive map for visualizing reports
+- Secure authentication and user management
+- Dashboard for community insights
+
+## Technologies
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn-ui
+- Supabase
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js & npm ([Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+
+### Local Development
+Clone the repository and start the development server:
+
+```sh
+git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Cloud Development
+You can use GitHub Codespaces or edit files directly in GitHub for instant cloud-based development.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## Deployment
+To deploy SafetyNet, you can use platforms like Vercel, Netlify, or your own server. Build the project and follow your chosen platform's deployment instructions:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+npm run build
+```
 
-## What technologies are used for this project?
+Upload the contents of the `dist/` folder to your hosting provider.
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Support & Contact
+For questions, feedback, or support, please contact:
 
-## How can I deploy this project?
+**William Ndhlovu**
 
-Simply open [Lovable](https://lovable.dev/projects/20f2d476-c0b9-44f1-b34b-1cb4a8a1f876) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+© 2025 William Ndhlovu. All rights reserved.
 
-Yes, you can!
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
