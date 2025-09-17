@@ -32,20 +32,6 @@ interface FormData {
   image?: File;
 }
 
-// Component for handling map clicks
-function LocationPicker({ position, setPosition }: { 
-  position: [number, number] | null; 
-  setPosition: (pos: [number, number] | null) => void 
-}) {
-  useMapEvents({
-    click: (e) => {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  
-  return position ? <Marker position={position} /> : null;
-}
-
 export default function ReportIncident() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -395,10 +381,10 @@ export default function ReportIncident() {
                   />
                 </div>
 
-                {/* Interactive Map */}
+                {/* Map Placeholder - Interactive location picker coming soon */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <Label>Click on map to set precise location (Optional)</Label>
+                    <Label>Set Location (Optional)</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -409,21 +395,22 @@ export default function ReportIncident() {
                       Use My Location
                     </Button>
                   </div>
-                  <div className="h-48 rounded-lg overflow-hidden border">
-                    <MapContainer 
-                      center={mapPosition || [40.7128, -74.0060]} 
-                      zoom={13} 
-                      style={{ height: '100%', width: '100%' }}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <LocationPicker position={mapPosition} setPosition={handleMapPositionChange} />
-                    </MapContainer>
+                  <div className="h-48 rounded-lg overflow-hidden border bg-muted">
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Interactive location picker coming soon</p>
+                        <p className="text-xs text-muted-foreground mt-1">Use the button above to get your current location</p>
+                        {mapPosition && (
+                          <p className="text-xs text-foreground mt-2 font-medium">
+                            Location set: {mapPosition[0].toFixed(4)}, {mapPosition[1].toFixed(4)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Click anywhere on the map to set the incident location. This helps with precise mapping.
+                    Click "Use My Location" to automatically set your current coordinates, or manually enter them below.
                   </p>
                 </div>
 
