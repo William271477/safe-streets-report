@@ -29,6 +29,7 @@ interface FormData {
   location: string;
   latitude?: number;
   longitude?: number;
+  image?: File;
 }
 
 // Component for handling map clicks
@@ -52,6 +53,7 @@ export default function ReportIncident() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [mapPosition, setMapPosition] = useState<[number, number] | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -72,11 +74,45 @@ export default function ReportIncident() {
     setUser(session.user);
   };
 
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
+  const handleInputChange = (field: keyof FormData, value: string | number | File) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleInputChange('image', file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file: File, userId: string): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('incident-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('incident-images')
+        .getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
   };
 
   const getCurrentLocation = () => {
@@ -128,6 +164,20 @@ export default function ReportIncident() {
     setLoading(true);
     
     try {
+      let imageUrl = null;
+      
+      // Upload image if provided
+      if (formData.image) {
+        imageUrl = await uploadImage(formData.image, user.id);
+        if (!imageUrl) {
+          toast({
+            title: "Image upload failed",
+            description: "Continuing without image.",
+            variant: "destructive"
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('incidents')
         .insert([{
@@ -137,6 +187,7 @@ export default function ReportIncident() {
           location: formData.location,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          image_url: imageUrl,
           user_id: user.id,
           status: 'new'
         }]);
@@ -148,7 +199,7 @@ export default function ReportIncident() {
         description: "Thank you for helping keep the community safe.",
       });
 
-      navigate('/');
+      navigate('/map');
     } catch (error) {
       console.error('Error submitting incident:', error);
       toast({
@@ -288,6 +339,37 @@ export default function ReportIncident() {
                     Include relevant details like time, people involved, and any other important information.
                   </p>
                 </div>
+
+                {/* Image Upload */}
+                <div>
+                  <Label htmlFor="image">Photo Evidence (Optional)</Label>
+                  <div className="mt-2">
+                    <input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="block w-full text-sm text-muted-foreground
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-medium
+                        file:bg-primary file:text-primary-foreground
+                        hover:file:bg-primary/90"
+                    />
+                    {imagePreview && (
+                      <div className="mt-3">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="max-w-full h-32 object-cover rounded-lg border"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upload a photo to help provide visual evidence of the incident.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -399,6 +481,17 @@ export default function ReportIncident() {
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Description</Label>
                     <p className="text-foreground whitespace-pre-wrap">{formData.description}</p>
+                  </div>
+                )}
+
+                {imagePreview && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Photo Evidence</Label>
+                    <img 
+                      src={imagePreview} 
+                      alt="Incident evidence" 
+                      className="mt-2 max-w-full h-48 object-cover rounded-lg border"
+                    />
                   </div>
                 )}
 

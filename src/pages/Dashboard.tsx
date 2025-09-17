@@ -93,6 +93,43 @@ export default function Dashboard() {
     return colors[status as keyof typeof colors] || 'text-status-new';
   };
 
+  const updateIncidentStatus = async (incidentId: string, newStatus: 'new' | 'investigating' | 'resolved') => {
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({ status: newStatus })
+        .eq('id', incidentId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserIncidents(prev => 
+        prev.map(incident => 
+          incident.id === incidentId 
+            ? { ...incident, status: newStatus }
+            : incident
+        )
+      );
+
+      // Recalculate stats
+      const updatedIncidents = userIncidents.map(incident => 
+        incident.id === incidentId 
+          ? { ...incident, status: newStatus }
+          : incident
+      );
+      
+      const total = updatedIncidents.length;
+      const newCount = updatedIncidents.filter(i => i.status === 'new').length;
+      const investigating = updatedIncidents.filter(i => i.status === 'investigating').length;
+      const resolved = updatedIncidents.filter(i => i.status === 'resolved').length;
+      
+      setStats({ total, new: newCount, investigating, resolved });
+    } catch (error) {
+      console.error('Error updating incident status:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>

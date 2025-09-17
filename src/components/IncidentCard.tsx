@@ -9,8 +9,9 @@ export interface Incident {
   description: string;
   category: 'emergency' | 'theft' | 'vandalism' | 'accident' | 'suspicious' | 'other';
   location: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  image_url?: string;
   status: 'new' | 'investigating' | 'resolved';
   created_at: string;
   updated_at?: string;
@@ -96,6 +97,15 @@ export function IncidentCard({ incident, onClick }: IncidentCardProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-0">
+        {incident.image_url && (
+          <div className="mb-3">
+            <img 
+              src={incident.image_url} 
+              alt="Incident evidence"
+              className="w-full h-32 object-cover rounded-lg border"
+            />
+          </div>
+        )}
         <div className="space-y-3">
           <Badge variant="outline" className={categoryInfo.className}>
             {categoryInfo.label}

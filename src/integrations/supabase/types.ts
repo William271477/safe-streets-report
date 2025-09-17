@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
           latitude: number | null
           location: string
           longitude: number | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           location: string
           longitude?: number | null
@@ -46,6 +48,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           location?: string
           longitude?: number | null

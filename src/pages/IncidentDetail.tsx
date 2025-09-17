@@ -200,6 +200,15 @@ export default function IncidentDetail() {
                 </div>
               </CardHeader>
               <CardContent>
+                {incident.image_url && (
+                  <div className="mb-6">
+                    <img 
+                      src={incident.image_url} 
+                      alt="Incident evidence"
+                      className="w-full max-h-96 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                   {incident.description || 'No additional details provided.'}
@@ -313,20 +322,17 @@ export default function IncidentDetail() {
   );
 }
 
-// Mock data for demo purposes
-const mockIncidents: Incident[] = [
+  const mockIncidents: Incident[] = [
   {
     id: '1',
     title: 'Suspicious vehicle in neighborhood',
     description: 'White van parked for several hours with no visible occupant, repeatedly circling the block.',
-    category: 'suspicious',
+    category: 'suspicious' as const,
     location: '123 Oak Street, Downtown',
     latitude: 40.7128,
     longitude: -74.0060,
-    status: 'new',
+    status: 'new' as const,
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    user_id: 'user1',
-    profiles: { display_name: 'John Doe' }
+    user_id: 'user1'
   }
 ];
